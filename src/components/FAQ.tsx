@@ -44,7 +44,7 @@ export const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="py-24 px-6 bg-gh-bg relative gh-grain">
+    <section id="faq" className="py-32 px-6 bg-gh-bg relative gh-grain">
       <div className="max-width-container mx-auto max-w-3xl relative z-10">
         <div className="text-center mb-16">
           <motion.span

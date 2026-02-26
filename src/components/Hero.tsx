@@ -13,7 +13,7 @@ export const Hero = () => {
   return (
     <section
       id="services"
-      className="relative min-h-screen flex flex-col items-center justify-center pt-24 overflow-hidden gh-grain"
+      className="relative min-h-screen flex flex-col items-center justify-center pt-32 md:pt-40 overflow-hidden gh-grain"
     >
       {/* Animated gradient orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gh-red/8 rounded-full blur-3xl pointer-events-none animate-pulse" />

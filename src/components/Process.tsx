@@ -37,7 +37,7 @@ const steps = [
 
 export const Process = () => {
   return (
-    <section id="process" className="py-24 px-6 bg-gh-bg relative gh-grain">
+    <section id="process" className="py-32 px-6 bg-gh-bg relative gh-grain">
       <div className="max-width-container mx-auto relative z-10">
         <div className="text-center mb-16">
           <motion.span

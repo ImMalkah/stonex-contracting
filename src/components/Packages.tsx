@@ -50,7 +50,7 @@ const packages = [
 
 export const Packages = () => {
   return (
-    <section id="plans" className="py-24 px-6 bg-white">
+    <section id="plans" className="py-32 px-6 bg-gh-bg">
       <div className="max-width-container mx-auto">
         <div className="text-center mb-16">
           <motion.span
