@@ -2,43 +2,33 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { Maximize2, X } from "lucide-react";
 
-// Using high-quality placeholder images of construction/concrete to demonstrate the gallery layout
-// The client will replace these with their own images in the public/gallery/ folder later.
+import { Button } from "./Button";
+
+// Utilizing the real photos uploaded by the client
 const galleryImages = [
-    {
-        url: "https://images.unsplash.com/photo-1541888081665-2244498308dc?auto=format&fit=crop&q=80&w=800",
-        title: "Excavation Works",
-        category: "Excavation"
-    },
-    {
-        url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=800",
-        title: "Concrete Pouring",
-        category: "Concrete Services"
-    },
-    {
-        url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=800",
-        title: "Foundation Setup",
-        category: "Concrete Services"
-    },
-    {
-        url: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=800",
-        title: "Equipment Delivery",
-        category: "Equipment Rentals"
-    },
-    {
-        url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800",
-        title: "Site Preparation",
-        category: "Full Project"
-    },
-    {
-        url: "https://images.unsplash.com/photo-1587582423116-ec07293f0395?auto=format&fit=crop&q=80&w=800",
-        title: "Heavy Machinery",
-        category: "Excavation"
-    }
+    { url: "/gallery/IMG_1913.jpg", title: "Site Assessment", category: "Our Work" },
+    { url: "/gallery/IMG_2144.jpg", title: "Excavation", category: "Our Work" },
+    { url: "/gallery/IMG_2147.jpg", title: "Equipment Delivery", category: "Our Work" },
+    { url: "/gallery/IMG_2240.jpg", title: "Concrete Finishing", category: "Our Work" },
+    { url: "/gallery/IMG_2325.jpg", title: "Driveway Concrete", category: "Our Work" },
+    { url: "/gallery/IMG_2399.jpg", title: "Machine Operator", category: "Our Work" },
+    { url: "/gallery/IMG_2412.jpg", title: "Patios & Walkways", category: "Our Work" },
+    { url: "/gallery/IMG_2413.jpg", title: "Concrete Pouring", category: "Our Work" },
+    { url: "/gallery/IMG_2782.jpg", title: "Residential Service", category: "Our Work" },
+    { url: "/gallery/IMG_3430.jpg", title: "Exposed Aggregate", category: "Our Work" },
+    { url: "/gallery/IMG_3625.jpg", title: "Site Grading", category: "Our Work" },
+    { url: "/gallery/IMG_3626.jpg", title: "Heavy Machinery", category: "Our Work" },
+    { url: "/gallery/IMG_3744.jpg", title: "Landscaping Details", category: "Our Work" },
+    { url: "/gallery/IMG_3746.jpg", title: "Track Loader", category: "Our Work" },
+    { url: "/gallery/IMG_3760.jpg", title: "Foundation Prep", category: "Our Work" },
+    { url: "/gallery/IMG_3762.jpg", title: "Skid Steer Action", category: "Our Work" },
+    { url: "/gallery/IMG_3766.jpg", title: "Mini Excavator", category: "Our Work" },
+    { url: "/gallery/IMG_3770.jpg", title: "Demolition Tasks", category: "Our Work" },
 ];
 
 export const Gallery = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [visibleCount, setVisibleCount] = useState(6);
 
     // Lock body scroll when lightbox is open
     if (typeof window !== 'undefined') {
@@ -81,7 +71,7 @@ export const Gallery = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {galleryImages.map((img, i) => (
+                    {galleryImages.slice(0, visibleCount).map((img, i) => (
                         <motion.div
                             key={i}
                             initial={{ opacity: 0, y: 30 }}
@@ -106,6 +96,21 @@ export const Gallery = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {visibleCount < galleryImages.length && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-12 text-center"
+                    >
+                        <Button
+                            variant="secondary"
+                            onClick={() => setVisibleCount((prev) => prev + 6)}
+                        >
+                            Load More
+                        </Button>
+                    </motion.div>
+                )}
             </div>
 
             {/* Lightbox */}
