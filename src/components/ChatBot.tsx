@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { GoogleGenAI } from "@google/genai";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface Message {
@@ -10,60 +11,45 @@ interface Message {
     timestamp: Date;
 }
 
-// ─── Local Knowledge Base Matcher ──────────────────────────────────────
-// This completely replaces the cloud AI. It is 100% free, unlimited, instant, 
-// and will *never* hallucinate incorrect pricing.
-const generateLocalResponse = (input: string): string => {
-    const text = input.toLowerCase();
+// ─── System prompt with full business context ───────────────────────
+const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **Stonex Contracting**, a heavy equipment and construction company.
 
-    // Greetings & pleasantries
-    if (text.match(/\b(hi|hello|hey|greetings|afternoon|morning|how are you)\b/)) {
-        return "Hello! I'm the internal Stonex assistant. How can I help you with your project or equipment rental today?";
-    }
+## About Stonex Contracting
+- Trusted GTA partner for machine rentals, excavation, and concrete work.
+- Service areas: Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton, and surrounding GTA regions.
 
-    // Concrete Services
-    if (text.match(/\b(concrete|patio|driveway|walkway|foundation|stamp|aggregate|paving|pour)\b/)) {
-        return "We offer premium concrete services including driveways, patios, walkways, and foundations. We provide white/broom finishes, exposed aggregate, and stamped concrete. Would you like a free quote for your project?";
-    }
+## Concrete Services
+- Finishes: white/broom finish, exposed aggregate, stamped concrete.
+- Projects: Walkways, driveways, patios, and foundations.
 
-    // Mini Excavator
-    if (text.match(/\b(mini ex|excavator|mini-excavator|mini excavator|dig|digger)\b/)) {
-        return "Our **mini excavators** rent for **$250/day** or **$1,500/week**. This includes insurance and safety equipment. Do you need delivery to your site?";
-    }
+## Equipment Rental Pricing
+- Wheeled skid steers: $250/day, $1,500/week
+- Track skid steers: $350/day, $1,800/week
+- Mini excavator: $250/day, $1,500/week
+- Trim dozer: $400/day, $5,000/month
+- All rentals include insurance, safety equipment, and GTA-wide delivery.
 
-    // Skid Steer
-    if (text.match(/\b(skid steer|skidsteer|bobcat|loader|wheeled|track loader)\b/)) {
-        return "We have two types of skid steers available:\n• **Wheeled Skid Steers**: $250/day or $1,500/week\n• **Track Skid Steers**: $350/day or $1,800/week\nWhich one fits your site conditions better?";
-    }
+## Contact
+- Phone: (289) 925-2669
+- Email: info@stonexcontracting.ca
+- Website: stonexcontracting.ca
 
-    // Dozer
-    if (text.match(/\b(dozer|bulldozer|trim dozer|grading)\b/)) {
-        return "Our **trim dozers** are available for **$400/day** or **$5,000/month**. They're perfect for precise grading. Would you like to check our availability?";
-    }
+## Behavior Guidelines
+- ONLY answer questions related to Stonex Contracting, its services, and pricing.
+- If a user asks about unrelated topics, politely redirect them to ask about our equipment or contracting services.
+- Be warm but concise.
+- For complex quotes, encourage calling the team.`;
 
-    // General Rentals Overview
-    if (text.match(/\b(rent|rental|rentals|machine|equipment|fleet|inventory)\b/)) {
-        return "We rent wheeled skid steers ($250/day), track skid steers ($350/day), mini excavators ($250/day), and trim dozers ($400/day). All rentals include insurance, safety equipment, and GTA-wide delivery. What machine are you looking for?";
-    }
+// ─── Gemini client (lazy init) ──────────────────────────────────────
+let genaiClient: any = null;
 
-    // Delivery / Areas / Areas served
-    if (text.match(/\b(delivery|deliver|where|areas|hamilton|mississauga|toronto|oakville|burlington|brampton|gta|location|bring)\b/)) {
-        return "We provide GTA-wide delivery, including Hamilton, Mississauga, Toronto, Oakville, Burlington, and Brampton. Most equipment can be delivered same-day or next-day! Where is your site located?";
-    }
-
-    // Demolition & Excavation (Service)
-    if (text.match(/\b(demolition|demo|excavation|digging|trench)\b/)) {
-        return "We provide full professional excavation and demolition services. We have the heavy machinery and licensed operators to handle your project start to finish. Would you like to schedule a free site assessment?";
-    }
-
-    // Contact / Quote / Phone
-    if (text.match(/\b(phone|call|email|contact|quote|estimate|price|cost|how much|book|schedule)\b/)) {
-        return "For specific quotes, estimates, or bookings, the best way is to call us directly at **(289) 925-2669** or email **info@stonexcontracting.ca**. We offer free, no-obligation site assessments!";
-    }
-
-    // Default Fallback
-    return "That's a great question! Since I'm a simple automated assistant, I want to make sure you get the most accurate answer. Could you give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca**? Our team would be happy to help!";
-};
+function getClient() {
+    if (genaiClient) return genaiClient;
+    const key = process.env.GEMINI_API_KEY;
+    if (!key || key === "YOUR_GEMINI_API_KEY_HERE") return null;
+    genaiClient = new GoogleGenAI({ apiKey: key });
+    return genaiClient;
+}
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
 const SUGGESTIONS = [
@@ -121,10 +107,42 @@ export const ChatBot = () => {
             setIsLoading(true);
 
             try {
-                // Simulate a slight network delay to feel like a real person typing
-                await new Promise((r) => setTimeout(r, 600 + Math.random() * 800));
+                const client = getClient();
 
-                const reply = generateLocalResponse(trimmed);
+                if (!client) {
+                    await new Promise((r) => setTimeout(r, 800));
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: (Date.now() + 1).toString(),
+                            role: "assistant",
+                            content:
+                                "I'm currently in fallback mode. Please reach out to us at **(289) 925-2669** for immediate help!",
+                            timestamp: new Date(),
+                        },
+                    ]);
+                    return;
+                }
+
+                // Format history for the SDK
+                const history = messages
+                    .filter((m) => m.id !== "welcome")
+                    .map((m) => ({
+                        role: m.role,
+                        parts: [{ text: m.content }],
+                    }));
+
+                const response = await client.models.generateContent({
+                    model: "gemini-1.5-flash",
+                    systemInstruction: SYSTEM_PROMPT,
+                    contents: [...history, { role: "user", parts: [{ text: trimmed }] }],
+                });
+
+                // Get reply from response - support multiple possible shapes
+                const reply =
+                    response?.text ||
+                    response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+                    "I'm sorry, I couldn't process that. Please try calling us!";
 
                 setMessages((prev) => [
                     ...prev,
@@ -135,15 +153,18 @@ export const ChatBot = () => {
                         timestamp: new Date(),
                     },
                 ]);
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Chat error:", err);
+                const isQuota = err?.message?.includes("429") || err?.message?.includes("quota");
+
                 setMessages((prev) => [
                     ...prev,
                     {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
-                        content:
-                            "I'm having a little trouble right now. You can always reach us directly at **(289) 925-2669** or **info@stonexcontracting.ca** — our team is happy to help!",
+                        content: isQuota
+                            ? "I've reached my daily limit for now. Please reach us at **(289) 925-2669** — our team is ready to help!"
+                            : "I'm having a little trouble right now. You can reach us directly at **(289) 925-2669**!",
                         timestamp: new Date(),
                     },
                 ]);
