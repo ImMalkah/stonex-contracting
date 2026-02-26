@@ -40,7 +40,7 @@ export const Gallery = () => {
     }
 
     return (
-        <section id="work" className="py-32 px-6 bg-gh-bg relative gh-grain">
+        <section id="work" className="pt-32 pb-20 px-6 bg-gh-bg relative gh-grain">
             <div className="max-width-container mx-auto">
                 <div className="text-center mb-16">
                     <motion.span
