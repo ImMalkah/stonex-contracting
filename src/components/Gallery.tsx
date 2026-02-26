@@ -111,12 +111,15 @@ export const Gallery = () => {
             {/* Lightbox */}
             {selectedImage && (
                 <div
-                    className="fixed inset-0 z-[100] bg-gh-text/95 backdrop-blur-md flex items-center justify-center p-4 md:p-12 transition-all duration-300"
+                    className="fixed inset-0 z-[100] bg-gh-text/95 backdrop-blur-md flex items-center justify-center p-4 md:p-12 transition-all duration-300 cursor-zoom-out"
                     onClick={() => setSelectedImage(null)}
                 >
                     <button
-                        className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors p-2 z-50 bg-gh-text/50 rounded-full"
-                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors p-2 z-50 bg-gh-text/50 rounded-full cursor-pointer"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedImage(null);
+                        }}
                     >
                         <X className="w-8 h-8" />
                     </button>
@@ -125,7 +128,7 @@ export const Gallery = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         src={selectedImage}
                         alt="Enlarged view"
-                        className="w-full h-full object-contain overflow-hidden rounded-md"
+                        className="max-w-full max-h-[90vh] object-contain overflow-hidden rounded-md cursor-default shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>
