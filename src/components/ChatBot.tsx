@@ -12,7 +12,7 @@ interface Message {
 }
 
 // ─── System prompt with full business context ───────────────────────
-const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **Stonex Contracting**, a heavy equipment and construction company.
+const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **Stonex Contracting**, a heavy equipment and construction company based in the Greater Toronto Area (GTA).
 
 ## About Stonex Contracting
 - Trusted GTA partner for machine rentals, excavation, and concrete work.
@@ -38,17 +38,20 @@ const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **
 - ONLY answer questions related to Stonex Contracting, its services, and pricing.
 - If a user asks about unrelated topics, politely redirect them to ask about our equipment or contracting services.
 - Be warm but concise.
-- For complex quotes, encourage calling the team.`;
+- For complex quotes, encourage calling the team directly.`;
 
 // ─── Gemini client (lazy init) ──────────────────────────────────────
-let genaiClient: any = null;
+let genai: GoogleGenAI | null = null;
 
-function getClient() {
-    if (genaiClient) return genaiClient;
+function getAIModel() {
     const key = process.env.GEMINI_API_KEY;
     if (!key || key === "YOUR_GEMINI_API_KEY_HERE") return null;
-    genaiClient = new GoogleGenAI({ apiKey: key });
-    return genaiClient;
+    if (!genai) genai = new GoogleGenAI(key);
+
+    return genai.getGenerativeModel({
+        model: "gemini-1.5-flash-latest",
+        systemInstruction: SYSTEM_PROMPT
+    });
 }
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
@@ -59,7 +62,6 @@ const SUGGESTIONS = [
     "Can you do driveways and patios?",
 ];
 
-// ─── Component ──────────────────────────────────────────────────────
 export const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
@@ -77,12 +79,10 @@ export const ChatBot = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-scroll on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Focus input when opened
     useEffect(() => {
         if (isOpen) {
             setTimeout(() => inputRef.current?.focus(), 300);
@@ -107,9 +107,9 @@ export const ChatBot = () => {
             setIsLoading(true);
 
             try {
-                const client = getClient();
+                const model = getAIModel();
 
-                if (!client) {
+                if (!model) {
                     await new Promise((r) => setTimeout(r, 800));
                     setMessages((prev) => [
                         ...prev,
@@ -124,25 +124,17 @@ export const ChatBot = () => {
                     return;
                 }
 
-                // Format history for the SDK
+                // Format history for the chat session
                 const history = messages
                     .filter((m) => m.id !== "welcome")
                     .map((m) => ({
-                        role: m.role,
+                        role: m.role === "assistant" ? "model" : "user",
                         parts: [{ text: m.content }],
                     }));
 
-                const response = await client.models.generateContent({
-                    model: "gemini-1.5-flash",
-                    systemInstruction: SYSTEM_PROMPT,
-                    contents: [...history, { role: "user", parts: [{ text: trimmed }] }],
-                });
-
-                // Get reply from response - support multiple possible shapes
-                const reply =
-                    response?.text ||
-                    response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-                    "I'm sorry, I couldn't process that. Please try calling us!";
+                const chat = model.startChat({ history });
+                const result = await chat.sendMessage(trimmed);
+                const reply = result.response.text();
 
                 setMessages((prev) => [
                     ...prev,
@@ -182,7 +174,6 @@ export const ChatBot = () => {
 
     return (
         <>
-            {/* ── Floating trigger button ─────────────────────────────── */}
             <AnimatePresence>
                 {!isOpen && (
                     <motion.button
@@ -194,7 +185,6 @@ export const ChatBot = () => {
                         onClick={() => setIsOpen(true)}
                         className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gh-red rounded-full flex items-center justify-center text-white shadow-2xl cursor-pointer"
                         id="chat-trigger"
-                        aria-label="Open chat"
                     >
                         <MessageCircle className="w-7 h-7" />
                         {showPulse && (
@@ -204,97 +194,48 @@ export const ChatBot = () => {
                 )}
             </AnimatePresence>
 
-            {/* ── Chat window ─────────────────────────────────────────── */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-3rem)] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/20"
-                        style={{
-                            background:
-                                "linear-gradient(180deg, #1A1D21 0%, #22252B 100%)",
-                        }}
+                        style={{ background: "linear-gradient(180deg, #1A1D21 0%, #22252B 100%)" }}
                     >
-                        {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 bg-gh-red/20 rounded-xl flex items-center justify-center">
                                     <Bot className="w-5 h-5 text-gh-red" />
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold text-sm">
-                                        Stonex Assistant
-                                    </p>
-                                    <p className="text-white/40 text-xs">
-                                        {isLoading ? "Typing…" : "Online • Typically replies instantly"}
-                                    </p>
+                                    <p className="text-white font-semibold text-sm">Stonex Assistant</p>
+                                    <p className="text-white/40 text-xs">{isLoading ? "Typing…" : "Online • Typically replies instantly"}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="text-white/40 hover:text-white transition-colors p-1"
-                                aria-label="Close chat"
-                                id="chat-close"
-                            >
+                            <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white p-1">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        {/* Messages area */}
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin">
                             {messages.map((msg) => (
                                 <motion.div
                                     key={msg.id}
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""
-                                        }`}
+                                    className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
                                 >
-                                    {/* Avatar */}
-                                    <div
-                                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${msg.role === "assistant"
-                                            ? "bg-gh-red/20 text-gh-red"
-                                            : "bg-gh-teal/20 text-gh-teal"
-                                            }`}
-                                    >
-                                        {msg.role === "assistant" ? (
-                                            <Bot className="w-4 h-4" />
-                                        ) : (
-                                            <User className="w-4 h-4" />
-                                        )}
+                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${msg.role === "assistant" ? "bg-gh-red/20 text-gh-red" : "bg-gh-teal/20 text-gh-teal"}`}>
+                                        {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                     </div>
-
-                                    {/* Bubble */}
-                                    <div
-                                        className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "assistant"
-                                            ? "bg-white/8 text-white/90 rounded-tl-md"
-                                            : "bg-gh-red text-white rounded-tr-md"
-                                            }`}
-                                    >
-                                        {msg.content.split("**").map((part, i) =>
-                                            i % 2 === 1 ? (
-                                                <strong key={i} className="font-semibold">
-                                                    {part}
-                                                </strong>
-                                            ) : (
-                                                <span key={i}>{part}</span>
-                                            )
-                                        )}
+                                    <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "assistant" ? "bg-white/8 text-white/90 rounded-tl-md" : "bg-gh-red text-white rounded-tr-md"}`}>
+                                        {msg.content.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : <span key={i}>{part}</span>)}
                                     </div>
                                 </motion.div>
                             ))}
-
-                            {/* Typing indicator */}
                             {isLoading && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="flex gap-2.5"
-                                >
+                                <div className="flex gap-2.5">
                                     <div className="w-7 h-7 rounded-lg bg-gh-red/20 flex items-center justify-center">
                                         <Bot className="w-4 h-4 text-gh-red" />
                                     </div>
@@ -302,32 +243,22 @@ export const ChatBot = () => {
                                         <Loader2 className="w-4 h-4 text-gh-red animate-spin" />
                                         <span className="text-white/40 text-xs">Thinking…</span>
                                     </div>
-                                </motion.div>
+                                </div>
                             )}
-
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Suggestion chips (show only at start) */}
                         {messages.length <= 1 && !isLoading && (
                             <div className="px-4 pb-2 flex flex-wrap gap-2">
                                 {SUGGESTIONS.map((s) => (
-                                    <button
-                                        key={s}
-                                        onClick={() => sendMessage(s)}
-                                        className="text-xs px-3 py-1.5 rounded-full bg-white/8 text-white/60 hover:bg-gh-red/20 hover:text-gh-red transition-colors border border-white/5"
-                                    >
+                                    <button key={s} onClick={() => sendMessage(s)} className="text-xs px-3 py-1.5 rounded-full bg-white/8 text-white/60 hover:bg-gh-red/20 hover:text-gh-red transition-colors border border-white/5">
                                         {s}
                                     </button>
                                 ))}
                             </div>
                         )}
 
-                        {/* Input */}
-                        <form
-                            onSubmit={handleSubmit}
-                            className="px-4 py-3 border-t border-white/10 flex gap-2"
-                        >
+                        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-white/10 flex gap-2">
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -335,18 +266,9 @@ export const ChatBot = () => {
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder="Ask about our services…"
                                 disabled={isLoading}
-                                id="chat-input"
-                                className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-gh-red/50 transition-colors disabled:opacity-50"
+                                className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gh-red/50 disabled:opacity-50"
                             />
-                            <motion.button
-                                type="submit"
-                                disabled={!input.trim() || isLoading}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-10 h-10 bg-gh-red rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-opacity shrink-0"
-                                id="chat-send"
-                                aria-label="Send message"
-                            >
+                            <motion.button type="submit" disabled={!input.trim() || isLoading} className="w-10 h-10 bg-gh-red rounded-xl flex items-center justify-center text-white disabled:opacity-30 shrink-0">
                                 <Send className="w-4 h-4" />
                             </motion.button>
                         </form>
