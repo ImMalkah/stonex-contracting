@@ -81,7 +81,7 @@ export const Hero = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.6 + i * 0.1 }}
-              className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-gh-muted/10 gh-shadow-soft hover:border-gh-red/30 hover:bg-white transition-all duration-300 cursor-default group"
+              className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-gh-card/60 backdrop-blur-sm border border-gh-border gh-shadow-soft hover:border-gh-red/30 hover:bg-gh-card transition-all duration-300 cursor-default group"
             >
               <div className="w-12 h-12 bg-gh-red/10 rounded-xl flex items-center justify-center text-gh-red group-hover:bg-gh-red group-hover:text-white transition-all duration-300">
                 <service.icon className="w-6 h-6" />

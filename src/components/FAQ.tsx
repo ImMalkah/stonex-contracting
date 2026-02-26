@@ -82,7 +82,7 @@ export const FAQ = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
               viewport={{ once: true }}
-              className={`bg-white rounded-2xl overflow-hidden transition-shadow duration-300 ${openIndex === i ? "gh-shadow-red" : "gh-shadow-soft"
+              className={`bg-gh-card rounded-2xl border border-gh-border overflow-hidden transition-shadow duration-300 ${openIndex === i ? "gh-shadow-red" : "gh-shadow-soft"
                 }`}
             >
               <button

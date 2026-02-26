@@ -1,12 +1,31 @@
 import { motion } from "motion/react";
 import { Button } from "./Button";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { useState } from "react";
 
 export const Footer = () => {
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+  const services = [
+    { id: "rental", label: "Equipment Rental" },
+    { id: "excavation", label: "Excavation" },
+    { id: "concrete", label: "Concrete Work" },
+    { id: "demolition", label: "Demolition" },
+    { id: "landscaping", label: "Landscaping" },
+    { id: "full-project", label: "Full Project" },
+    { id: "other", label: "Other" },
+  ];
+
+  const toggleService = (id: string) => {
+    setSelectedServices((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
   return (
     <footer
       id="contact"
-      className="bg-gh-text py-24 px-6 text-white overflow-hidden relative"
+      className="bg-gh-footer py-24 px-6 text-gh-footer-text overflow-hidden relative"
     >
       {/* Background accent */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gh-red/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4" />
@@ -71,11 +90,14 @@ export const Footer = () => {
             </p>
 
             <form
-              className="space-y-4"
+              className="space-y-6"
               onSubmit={(e) => {
                 e.preventDefault();
                 alert(
-                  "Thank you! We'll be in touch within 24 hours."
+                  `Thank you! We've received your request for: ${selectedServices.length > 0
+                    ? selectedServices.join(", ")
+                    : "General Services"
+                  }. We'll be in touch within 24 hours.`
                 );
               }}
             >
@@ -102,21 +124,26 @@ export const Footer = () => {
                 id="contact-email"
                 className="w-full bg-white/10 border border-white/10 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 focus:outline-none focus:border-gh-red/50 transition-colors"
               />
-              <select
-                id="contact-service"
-                className="w-full bg-white/10 border border-white/10 rounded-xl px-5 py-3.5 text-white/70 focus:outline-none focus:border-gh-red/50 transition-colors appearance-none cursor-pointer"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Service needed
-                </option>
-                <option value="rental">Equipment Rental</option>
-                <option value="excavation">Excavation</option>
-                <option value="concrete">Concrete Work</option>
-                <option value="demolition">Demolition</option>
-                <option value="landscaping">Landscaping</option>
-                <option value="full-project">Full Project</option>
-              </select>
+
+              <div className="space-y-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-white/40">Select Services (Multiple OK)</p>
+                <div className="flex flex-wrap gap-2">
+                  {services.map((service) => (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => toggleService(service.id)}
+                      className={`px-4 py-2 rounded-full border text-xs font-medium transition-all duration-300 ${selectedServices.includes(service.id)
+                        ? "bg-gh-red border-gh-red text-white"
+                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/30"
+                        }`}
+                    >
+                      {service.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea
                 placeholder="Tell us about your project..."
                 rows={4}

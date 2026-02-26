@@ -90,7 +90,7 @@ export const Packages = () => {
               viewport={{ once: true }}
               className={`relative p-10 rounded-[40px] border-2 flex flex-col transition-all duration-300 group hover:scale-[1.02] ${pkg.featured
                 ? "bg-gh-bg border-gh-red gh-shadow-red"
-                : "bg-white border-gh-muted/20 gh-shadow-teal hover:border-gh-red/30"
+                : "bg-gh-card border-gh-border flex flex-col gh-shadow-teal hover:border-gh-red/30"
                 }`}
             >
               {pkg.featured && (

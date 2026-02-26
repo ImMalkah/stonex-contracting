@@ -218,20 +218,19 @@ export const ChatBot = () => {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-3rem)] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/20"
-                        style={{ background: "linear-gradient(180deg, #1A1D21 0%, #22252B 100%)" }}
+                        className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-3rem)] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-gh-border bg-gh-card"
                     >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-gh-border bg-gh-bg/50">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 bg-gh-red/20 rounded-xl flex items-center justify-center">
                                     <Bot className="w-5 h-5 text-gh-red" />
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold text-sm">Stonex Assistant</p>
-                                    <p className="text-white/40 text-xs">{isLoading ? "Thinking…" : "Online"}</p>
+                                    <p className="text-gh-text font-semibold text-sm">Stonex Assistant</p>
+                                    <p className="text-gh-muted text-xs">{isLoading ? "Thinking…" : "Online"}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white p-1">
+                            <button onClick={() => setIsOpen(false)} className="text-gh-muted hover:text-gh-red p-1 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -242,7 +241,7 @@ export const ChatBot = () => {
                                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${msg.role === "assistant" ? "bg-gh-red/20 text-gh-red" : "bg-gh-teal/20 text-gh-teal"}`}>
                                         {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                     </div>
-                                    <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "assistant" ? "bg-white/8 text-white/90 rounded-tl-md" : "bg-gh-red text-white rounded-tr-md"}`}>
+                                    <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "assistant" ? "bg-gh-bg text-gh-text rounded-tl-md border border-gh-border" : "bg-gh-red text-white rounded-tr-md"}`}>
                                         {msg.content.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : <span key={i}>{part}</span>)}
                                     </div>
                                 </motion.div>
@@ -252,9 +251,9 @@ export const ChatBot = () => {
                                     <div className="w-7 h-7 rounded-lg bg-gh-red/20 flex items-center justify-center">
                                         <Bot className="w-4 h-4 text-gh-red" />
                                     </div>
-                                    <div className="bg-white/8 px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
+                                    <div className="bg-gh-bg border border-gh-border px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
                                         <Loader2 className="w-4 h-4 text-gh-red animate-spin" />
-                                        <span className="text-white/40 text-xs">Analyzing…</span>
+                                        <span className="text-gh-muted text-xs">Analyzing…</span>
                                     </div>
                                 </div>
                             )}
@@ -264,14 +263,14 @@ export const ChatBot = () => {
                         {messages.length <= 1 && !isLoading && (
                             <div className="px-4 pb-2 flex flex-wrap gap-2">
                                 {SUGGESTIONS.map((s) => (
-                                    <button key={s} onClick={() => sendMessage(s)} className="text-xs px-3 py-1.5 rounded-full bg-white/8 text-white/60 hover:bg-gh-red/20 hover:text-gh-red border border-white/5 transition-colors">
+                                    <button key={s} onClick={() => sendMessage(s)} className="text-xs px-3 py-1.5 rounded-full bg-gh-bg text-gh-muted hover:bg-gh-red/20 hover:text-gh-red border border-gh-border transition-colors">
                                         {s}
                                     </button>
                                 ))}
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-white/10 flex gap-2">
+                        <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-gh-border bg-gh-bg/50 flex gap-2">
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -279,7 +278,7 @@ export const ChatBot = () => {
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder="Message Stonex..."
                                 disabled={isLoading}
-                                className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gh-red/50 disabled:opacity-50"
+                                className="flex-1 bg-gh-card border border-gh-border rounded-xl px-4 py-2.5 text-gh-text text-sm focus:outline-none focus:border-gh-red/50 disabled:opacity-50 placeholder:text-gh-muted/50"
                             />
                             <motion.button type="submit" disabled={!input.trim() || isLoading} className="w-10 h-10 bg-gh-red rounded-xl flex items-center justify-center text-white disabled:opacity-30 shrink-0">
                                 <Send className="w-4 h-4" />

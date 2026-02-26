@@ -1,16 +1,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap');
 @import "tailwindcss";
 
+:root {
+  --gh-bg: #F8F9FA;
+  --gh-text: #1A1D21;
+  --gh-muted: #6C757D;
+  --gh-card: #FFFFFF;
+  --gh-border: rgba(108, 117, 125, 0.1);
+  --gh-footer-bg: #1A1D21;
+  --gh-footer-text: #FFFFFF;
+  --gh-red: #F57F18;
+  --gh-teal: #3E8892;
+}
+
+.dark {
+  --gh-bg: #0D0F12;
+  --gh-text: #F8F9FA;
+  --gh-muted: #9BA3AF;
+  --gh-card: #1A1D21;
+  --gh-border: rgba(255, 255, 255, 0.1);
+  --gh-footer-bg: #050607;
+  --gh-footer-text: #F8F9FA;
+}
+
 @theme {
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
 
-  --color-gh-bg: #F8F9FA;
-  --color-gh-text: #1A1D21;
+  --color-gh-bg: var(--gh-bg);
+  --color-gh-text: var(--gh-text);
   --color-gh-red: #F57F18;
   --color-gh-teal: #3E8892;
   --color-gh-orange: #F57F18;
-  --color-gh-muted: #6C757D;
+  --color-gh-muted: var(--gh-muted);
+  --color-gh-card: var(--gh-card);
+  --color-gh-border: var(--gh-border);
+  --color-gh-footer: var(--gh-footer-bg);
+  --color-gh-footer-text: var(--gh-footer-text);
   --color-gh-dark: #0D0F12;
 }
 

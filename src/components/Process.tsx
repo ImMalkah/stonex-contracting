@@ -75,7 +75,7 @@ export const Process = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.15 }}
               viewport={{ once: true }}
-              className="bg-white p-10 rounded-[40px] border-2 border-gh-red/10 gh-shadow-soft hover:gh-shadow-red flex flex-col items-center text-center transition-shadow duration-300 group"
+              className="bg-gh-card p-10 rounded-[40px] border-2 border-gh-border gh-shadow-soft hover:border-gh-red/30 hover:gh-shadow-red flex flex-col items-center text-center transition-all duration-300 group"
             >
               <div className={`w-16 h-16 ${step.accent}/10 rounded-2xl flex items-center justify-center text-gh-red mb-6 group-hover:scale-110 transition-transform duration-300`}>
                 <step.icon className="w-8 h-8" />

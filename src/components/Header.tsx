@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, Phone } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./Button";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -16,7 +17,7 @@ export const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col shadow-sm">
-      <div className="w-full bg-gh-text text-white py-2 border-b border-white/10">
+      <div className="w-full bg-gh-footer text-gh-footer-text py-2 border-b border-white/10">
         <div className="max-width-container mx-auto px-6 flex justify-center md:justify-end items-center">
           <a href="tel:+12899252669" className="flex items-center gap-2 text-[10px] md:text-xs font-bold tracking-widest uppercase hover:text-gh-red transition-colors">
             <Phone className="w-3.5 h-3.5" />
@@ -47,11 +48,15 @@ export const Header = () => {
                 {link.label}
               </a>
             ))}
-            <Button href="#contact" className="!px-6 !py-2.5 !text-xs ml-2" showIcon={false}>Free Quote</Button>
+            <div className="flex items-center gap-4 ml-4">
+              <ThemeToggle />
+              <Button href="#contact" className="!px-6 !py-2.5 !text-xs" showIcon={false}>Free Quote</Button>
+            </div>
           </nav>
 
           {/* Mobile Actions */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-3 md:hidden">
+            <ThemeToggle />
             <Button href="#contact" className="!px-4 !py-2 !text-[10px] tracking-widest uppercase" showIcon={false}>Free Quote</Button>
             <button
               className="text-gh-text p-2 -mr-2"
