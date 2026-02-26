@@ -14,8 +14,8 @@ export default function App() {
       <main>
         <Hero />
         <Gallery />
-        <Process />
         <Packages />
+        <Process />
         <FAQ />
       </main>
       <Footer />
