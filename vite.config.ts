@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify((process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '').trim()),
+      'process.env.OPENAI_API_KEY': JSON.stringify((process.env.OPENAI_API_KEY || env.OPENAI_API_KEY || '').trim()),
     },
     resolve: {
       alias: {

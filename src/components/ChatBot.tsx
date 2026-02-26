@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface Message {
@@ -11,57 +11,65 @@ interface Message {
     timestamp: Date;
 }
 
-// ─── System prompt with full business context ───────────────────────
-const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **Stonex Contracting**, a heavy equipment and construction company based in the Greater Toronto Area (GTA).
+// ─── Knowledge Base ──────────────────────────────────────────────────
+const SYSTEM_PROMPT = `You are the professional and helpful AI assistant for **Stonex Contracting**.
+Your goal is to answer questions about the company's services, pricing, and service areas based on the following information:
 
 ## About Stonex Contracting
-- Trusted GTA partner for machine rentals, excavation, and concrete work.
-- Service areas: Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton, and surrounding GTA regions.
+- **Specialization**: Heavy equipment rentals, excavation, and professional concrete work.
+- **Service Areas**: Greater Toronto Area (GTA), including Hamilton, Mississauga, Toronto, Oakville, Burlington, and Brampton.
 
-## Concrete Services
-- Finishes: white/broom finish, exposed aggregate, stamped concrete.
-- Projects: Walkways, driveways, patios, and foundations.
+## Services & Pricing
+### 1. Concrete Work
+- We handle all types of concrete: driveways, patios, walkways, and foundations.
+- **Finishes**: White/broom finish, exposed aggregate, and stamped concrete.
+- We offer free, no-obligation site assessments.
 
-## Equipment Rental Pricing
-- Wheeled skid steers: $250/day, $1,500/week
-- Track skid steers: $350/day, $1,800/week
-- Mini excavator: $250/day, $1,500/week
-- Trim dozer: $400/day, $5,000/month
-- All rentals include insurance, safety equipment, and GTA-wide delivery.
+### 2. Equipment Rentals (Daily/Weekly/Monthly)
+- **Wheeled Skid Steer**: $250/day | $1,500/week
+- **Track Skid Steer**: $350/day | $1,800/week
+- **Mini Excavator**: $250/day | $1,500/week
+- **Trim Dozer**: $400/day | $5,000/month
+- *All rentals include insurance, safety equipment, and GTA-wide delivery.*
 
-## Contact
-- Phone: (289) 925-2669
-- Email: info@stonexcontracting.ca
-- Website: stonexcontracting.ca
+### 3. Professional Services
+- **Excavation & Demolition**: Full-service demo and digging with professional operators.
+- **Delivery**: Same-day or next-day delivery available for most equipment.
+- **Support**: 24/7 breakdown support with replacement dispatch.
 
-## Behavior Guidelines
-- ONLY answer questions related to Stonex Contracting, its services, and pricing.
-- If a user asks about unrelated topics, politely redirect them to ask about our equipment or contracting services.
-- Be warm but concise.
-- For complex quotes, encourage calling the team directly.`;
+## Contact Information
+- **Phone**: (289) 925-2669
+- **Email**: info@stonexcontracting.ca
+- **Website**: stonexcontracting.ca
 
-// ─── Gemini client (lazy init) ──────────────────────────────────────
-let genai: any = null;
+## Behavior Rules
+1. **Be Helpful & Concise**: Provide clear, direct answers.
+2. **Stay on Topic**: ONLY answer questions about Stonex Contracting. If asked about unrelated topics, politely redirect back to our services.
+3. **Accuracy**: Never invent pricing. Only use the figures listed above.
+4. **Call to Action**: For complex project quotes or bookings, always encourage the user to call (289) 925-2669 or email the team.
+5. **Tone**: Warm, reliable, and professional.`;
 
-function getAIModel() {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key || key === "YOUR_GEMINI_API_KEY_HERE" || key.trim() === "") return null;
+// ─── OpenAI client (lazy init) ──────────────────────────────────────
+let openaiClient: OpenAI | null = null;
 
-    // Using { apiKey } object is more robust in some browser environments
-    if (!genai) genai = new (GoogleGenAI as any)({ apiKey: key });
-
-    return (genai as any).getGenerativeModel({
-        model: "gemini-1.5-flash-latest",
-        systemInstruction: SYSTEM_PROMPT
-    });
+function getOpenAIClient() {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key || key === "YOUR_OPENAI_API_KEY_HERE" || key.trim() === "") return null;
+    if (!openaiClient) {
+        openaiClient = new OpenAI({
+            apiKey: key,
+            dangerouslyAllowBrowser: true // This is safe here because we're using environment variables
+        });
+    }
+    return openaiClient;
 }
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
 const SUGGESTIONS = [
-    "What concrete finishes do you offer?",
-    "How much does a mini ex cost?",
-    "Do you serve Mississauga?",
-    "Can you do driveways and patios?",
+    "Concrete finishing options?",
+    "Mini excavator rental price?",
+    "Do you serve Hamilton?",
+    "Concrete patio quotes?",
 ];
 
 export const ChatBot = () => {
@@ -70,8 +78,7 @@ export const ChatBot = () => {
         {
             id: "welcome",
             role: "assistant",
-            content:
-                "Hey there! 👋 I'm the Stonex assistant. Whether you need equipment rental info, pricing, or help planning your project — I'm here for you. How can I help?",
+            content: "Welcome to Stonex! 👋 I'm here to help with your project planning, equipment rentals, or excavation questions. How can I assist you today?",
             timestamp: new Date(),
         },
     ]);
@@ -109,34 +116,40 @@ export const ChatBot = () => {
             setIsLoading(true);
 
             try {
-                const model = getAIModel();
+                const client = getOpenAIClient();
 
-                if (!model) {
+                if (!client) {
                     await new Promise((r) => setTimeout(r, 800));
                     setMessages((prev) => [
                         ...prev,
                         {
                             id: (Date.now() + 1).toString(),
                             role: "assistant",
-                            content:
-                                "I'm currently in fallback mode. Please reach out to us at **(289) 925-2669** for immediate help!",
+                            content: "I'm currently in manual mode. Please give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca** for immediate help!",
                             timestamp: new Date(),
                         },
                     ]);
                     return;
                 }
 
-                // Format history for the chat session
-                const history = messages
-                    .filter((m) => m.id !== "welcome")
-                    .map((m) => ({
-                        role: m.role === "assistant" ? "model" : "user",
-                        parts: [{ text: m.content }],
+                const chatMessages = messages
+                    .filter(m => m.id !== "welcome")
+                    .map(m => ({
+                        role: m.role as "user" | "assistant",
+                        content: m.content
                     }));
 
-                const chat = model.startChat({ history });
-                const result = await chat.sendMessage(trimmed);
-                const reply = result.response.text();
+                const completion = await client.chat.completions.create({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        { role: "system", content: SYSTEM_PROMPT },
+                        ...chatMessages,
+                        { role: "user", content: trimmed }
+                    ],
+                    max_tokens: 300,
+                });
+
+                const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that. Please try calling us!";
 
                 setMessages((prev) => [
                     ...prev,
@@ -149,15 +162,15 @@ export const ChatBot = () => {
                 ]);
             } catch (err: any) {
                 console.error("Chat error:", err);
-                const isQuota = err?.message?.includes("429") || err?.message?.includes("quota");
+                const isInsufficientQuota = err?.message?.toLowerCase().includes("quota") || err?.status === 429;
 
                 setMessages((prev) => [
                     ...prev,
                     {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
-                        content: isQuota
-                            ? "I've reached my daily limit for now. Please reach us at **(289) 925-2669** — our team is ready to help!"
+                        content: isInsufficientQuota
+                            ? "Our automated system is at maximum capacity. Please reach us at **(289) 925-2669** for immediate help!"
                             : "I'm having a little trouble right now. You can reach us directly at **(289) 925-2669**!",
                         timestamp: new Date(),
                     },
@@ -186,12 +199,9 @@ export const ChatBot = () => {
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setIsOpen(true)}
                         className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gh-red rounded-full flex items-center justify-center text-white shadow-2xl cursor-pointer"
-                        id="chat-trigger"
                     >
                         <MessageCircle className="w-7 h-7" />
-                        {showPulse && (
-                            <span className="absolute inset-0 rounded-full bg-gh-red animate-ping opacity-40" />
-                        )}
+                        {showPulse && <span className="absolute inset-0 rounded-full bg-gh-red animate-ping opacity-40" />}
                     </motion.button>
                 )}
             </AnimatePresence>
@@ -212,7 +222,7 @@ export const ChatBot = () => {
                                 </div>
                                 <div>
                                     <p className="text-white font-semibold text-sm">Stonex Assistant</p>
-                                    <p className="text-white/40 text-xs">{isLoading ? "Typing…" : "Online • Typically replies instantly"}</p>
+                                    <p className="text-white/40 text-xs">{isLoading ? "Thinking…" : "Online"}</p>
                                 </div>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white p-1">
@@ -222,12 +232,7 @@ export const ChatBot = () => {
 
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin">
                             {messages.map((msg) => (
-                                <motion.div
-                                    key={msg.id}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-                                >
+                                <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${msg.role === "assistant" ? "bg-gh-red/20 text-gh-red" : "bg-gh-teal/20 text-gh-teal"}`}>
                                         {msg.role === "assistant" ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                     </div>
@@ -243,7 +248,7 @@ export const ChatBot = () => {
                                     </div>
                                     <div className="bg-white/8 px-4 py-3 rounded-2xl rounded-tl-md flex items-center gap-1.5">
                                         <Loader2 className="w-4 h-4 text-gh-red animate-spin" />
-                                        <span className="text-white/40 text-xs">Thinking…</span>
+                                        <span className="text-white/40 text-xs">Analyzing…</span>
                                     </div>
                                 </div>
                             )}
@@ -253,7 +258,7 @@ export const ChatBot = () => {
                         {messages.length <= 1 && !isLoading && (
                             <div className="px-4 pb-2 flex flex-wrap gap-2">
                                 {SUGGESTIONS.map((s) => (
-                                    <button key={s} onClick={() => sendMessage(s)} className="text-xs px-3 py-1.5 rounded-full bg-white/8 text-white/60 hover:bg-gh-red/20 hover:text-gh-red transition-colors border border-white/5">
+                                    <button key={s} onClick={() => sendMessage(s)} className="text-xs px-3 py-1.5 rounded-full bg-white/8 text-white/60 hover:bg-gh-red/20 hover:text-gh-red border border-white/5 transition-colors">
                                         {s}
                                     </button>
                                 ))}
@@ -266,7 +271,7 @@ export const ChatBot = () => {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Ask about our services…"
+                                placeholder="Message Stonex assistant…"
                                 disabled={isLoading}
                                 className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gh-red/50 disabled:opacity-50"
                             />
