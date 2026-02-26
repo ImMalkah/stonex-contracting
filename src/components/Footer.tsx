@@ -31,13 +31,13 @@ export const Footer = () => {
             </p>
             <div className="flex flex-col gap-5">
               <a
-                href="tel:+16475551234"
+                href="tel:+12899252669"
                 className="flex items-center gap-3 text-lg hover:text-gh-red transition-colors group"
               >
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-gh-red/20 transition-colors">
                   <Phone className="w-5 h-5" />
                 </div>
-                (647) 555-1234
+                (289) 925-2669
               </a>
               <a
                 href="mailto:info@stonexcontracting.ca"

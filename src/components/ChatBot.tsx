@@ -39,7 +39,7 @@ const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **
 - 24/7 breakdown support with replacement dispatch
 
 ## Contact
-- Phone: (647) 555-1234
+- Phone: (289) 925-2669
 - Email: info@stonexcontracting.ca
 
 ## Your Behavior Guidelines
@@ -129,7 +129,7 @@ export const ChatBot = () => {
                             id: (Date.now() + 1).toString(),
                             role: "assistant",
                             content:
-                                "Thanks for reaching out! Our team is the best resource for your question. Give us a call at **(647) 555-1234** or email **info@stonexcontracting.ca** and we'll get right back to you!",
+                                "Thanks for reaching out! Our team is the best resource for your question. Give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca** and we'll get right back to you!",
                             timestamp: new Date(),
                         },
                     ]);
@@ -170,7 +170,7 @@ export const ChatBot = () => {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
                         content:
-                            "I'm having a little trouble right now. You can always reach us directly at **(647) 555-1234** or **info@stonexcontracting.ca** — our team is happy to help!",
+                            "I'm having a little trouble right now. You can always reach us directly at **(289) 925-2669** or **info@stonexcontracting.ca** — our team is happy to help!",
                         timestamp: new Date(),
                     },
                 ]);

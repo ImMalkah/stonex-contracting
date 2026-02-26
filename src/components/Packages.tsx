@@ -131,7 +131,7 @@ export const Packages = () => {
 
               <div className="mt-auto pt-8 border-t border-gh-muted/10">
                 <Button className="w-full mb-4" href="#contact">
-                  Get started
+                  Get Free Quote
                 </Button>
                 <p className="text-center text-xs italic text-gh-muted">
                   {pkg.note}

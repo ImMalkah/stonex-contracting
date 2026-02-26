@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Button } from "./Button";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -27,7 +28,7 @@ export const Header = () => {
         </motion.a>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex gap-8 text-sm font-medium uppercase tracking-widest text-gh-muted">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium uppercase tracking-widest text-gh-muted">
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -37,17 +38,21 @@ export const Header = () => {
               {link.label}
             </a>
           ))}
+          <Button href="#contact" className="!px-6 !py-2.5 !text-xs ml-2" showIcon={false}>Free Quote</Button>
         </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden text-gh-text p-2"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-          id="mobile-menu-toggle"
-        >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Button href="#contact" className="!px-4 !py-2 !text-[10px] tracking-widest uppercase" showIcon={false}>Free Quote</Button>
+          <button
+            className="text-gh-text p-2 -mr-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+            id="mobile-menu-toggle"
+          >
+            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
