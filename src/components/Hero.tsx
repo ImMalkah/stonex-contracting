@@ -37,7 +37,7 @@ export const Hero = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-5xl md:text-7xl lg:text-8xl mb-8 leading-[1.1]"
         >
-          Heavy Equipment{" "}
+          Contracting & Rentals{" "}
           <span className="text-gh-red italic">Simplified</span>.
         </motion.h1>
 
@@ -47,9 +47,8 @@ export const Hero = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-xl md:text-2xl text-gh-text/80 mb-12 max-w-3xl mx-auto font-light"
         >
-          GTA&#39;s trusted partner for machine rentals, excavation, and
-          concrete work. From skidsteers to excavators, we provide the power you
-          need to get the job done.
+          GTA&#39;s trusted partner for premium concrete work, precise excavation,
+          and reliable heavy equipment rentals. We build it, or we rent you the power to.
         </motion.p>
 
         <motion.div
