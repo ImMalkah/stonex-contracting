@@ -1,6 +1,7 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { Process } from "./components/Process";
+import { Gallery } from "./components/Gallery";
 import { Packages } from "./components/Packages";
 import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
@@ -12,6 +13,7 @@ export default function App() {
       <Header />
       <main>
         <Hero />
+        <Gallery />
         <Process />
         <Packages />
         <FAQ />
