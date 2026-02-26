@@ -54,7 +54,7 @@ let openaiClient: OpenAI | null = null;
 
 function getOpenAIClient() {
     const key = process.env.OPENAI_API_KEY;
-    if (!key || key === "YOUR_OPENAI_API_KEY_HERE" || key.trim() === "") return null;
+    if (!key || key.trim() === "") return null;
     if (!openaiClient) {
         openaiClient = new OpenAI({
             apiKey: key,
