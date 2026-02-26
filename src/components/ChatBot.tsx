@@ -19,16 +19,16 @@ const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **
 - Service areas: Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton, and surrounding GTA regions
 - Core services: Excavation, Concrete Work, Landscaping, Demolition, Equipment Rental
 
-## Equipment We Rent
-- Mini excavators, full-size excavators
-- Skidsteers / compact track loaders
-- Backhoes, bulldozers, compactors
-- Specialized attachments for demolition, grading, and landscaping
+## Concrete Services
+- All types of concrete poured and finished
+- Finishes: white/broom finish, exposed aggregate, stamp
+- Projects: Walkways, driveways, patios, Foundations
 
-## Rental Packages
-1. **Day Rental** — From $350/day: Compact equipment, delivery & pickup within GTA, optional operator, safety equipment & fuel included
-2. **Weekly Package** — From $1,800/week (Most Popular): Full-size equipment, free delivery, priority scheduling, dedicated operator option, on-site support & maintenance
-3. **Full Project** — Custom quote: All equipment types, dedicated project manager, multiple machines & operators, end-to-end project handling
+## Equipment Rental Pricing
+- Wheeled skid steers: $250/day, $1,500/week
+- Track skid steers: $350/day, $1,800/week
+- Mini excavator: $250/day, $1,500/week
+- Trim dozer: $400/day, $5,000/month
 
 ## Additional Info
 - Free site assessments — no obligation
@@ -53,6 +53,7 @@ const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **
 // ─── Gemini client (lazy init) ──────────────────────────────────────
 let genaiClient: GoogleGenAI | null = null;
 
+
 function getClient(): GoogleGenAI | null {
     if (genaiClient) return genaiClient;
     const key = process.env.GEMINI_API_KEY;
@@ -63,10 +64,10 @@ function getClient(): GoogleGenAI | null {
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
 const SUGGESTIONS = [
-    "What equipment do you rent?",
-    "How much does a day rental cost?",
+    "What concrete finishes do you offer?",
+    "How much does a mini ex cost?",
     "Do you serve Mississauga?",
-    "Can I get an operator too?",
+    "Can you do driveways and patios?",
 ];
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -262,8 +263,8 @@ export const ChatBot = () => {
                                     {/* Avatar */}
                                     <div
                                         className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${msg.role === "assistant"
-                                                ? "bg-gh-red/20 text-gh-red"
-                                                : "bg-gh-teal/20 text-gh-teal"
+                                            ? "bg-gh-red/20 text-gh-red"
+                                            : "bg-gh-teal/20 text-gh-teal"
                                             }`}
                                     >
                                         {msg.role === "assistant" ? (
@@ -276,8 +277,8 @@ export const ChatBot = () => {
                                     {/* Bubble */}
                                     <div
                                         className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === "assistant"
-                                                ? "bg-white/8 text-white/90 rounded-tl-md"
-                                                : "bg-gh-red text-white rounded-tr-md"
+                                            ? "bg-white/8 text-white/90 rounded-tl-md"
+                                            : "bg-gh-red text-white rounded-tr-md"
                                             }`}
                                     >
                                         {msg.content.split("**").map((part, i) =>

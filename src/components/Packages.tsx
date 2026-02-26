@@ -4,46 +4,44 @@ import { Button } from "./Button";
 
 const packages = [
   {
-    title: "Day Rental",
-    price: "From $350",
+    title: "Equipment Rentals",
+    price: "From $250",
     period: "/day",
     description:
-      "Perfect for quick jobs or when you need to try before committing.",
+      "Well-maintained heavy equipment ready for your site.",
     features: [
-      "Choice of skidsteer, mini excavator, or compact equipment",
-      "Delivery & pickup within GTA included",
-      "Operator available at additional rate",
-      "Safety equipment & fuel included",
+      "Wheeled skid steers: $250/day • $1,500/week",
+      "Track skid steers: $350/day • $1,800/week",
+      "Mini excavator: $250/day • $1,500/week",
+      "Trim dozer: $400/day • $5,000/month",
     ],
-    note: "Get the job done fast.",
+    note: "All equipment is thoroughly inspected.",
+    featured: true,
   },
   {
-    title: "Weekly Package",
-    price: "From $1,800",
-    period: "/week",
+    title: "Concrete Services",
+    price: "Custom",
+    period: "quote",
     description:
-      "Best value for residential and mid-size commercial projects.",
+      "From foundations to decorative finishes, we handle all your concrete needs.",
     features: [
-      "Full-size excavators, skidsteers, and more",
-      "Free delivery & pickup across the GTA",
-      "Priority scheduling & dedicated operator option",
-      "On-site support & maintenance included",
-      "Flexible extension options",
+      "Walkways, driveways, and patios",
+      "Foundation pouring and finishing",
+      "All types of concrete poured",
+      "Finishes: white/broom finish, exposed aggregate, stamp",
     ],
-    note: "Our most popular option.",
-    featured: true,
+    note: "Professional finishing every time.",
   },
   {
     title: "Full Project",
     price: "Custom",
     period: "quote",
     description:
-      "End-to-end equipment & crew for large-scale projects.",
+      "End-to-end management for large-scale operations.",
     features: [
-      "All equipment types available",
+      "Excavation, grading & demolition",
       "Dedicated project manager",
       "Multiple machines & operators",
-      "Excavation, grading, concrete — we handle it all",
       "Ongoing support with direct communication",
     ],
     note: "Let us handle everything.",
@@ -69,7 +67,7 @@ export const Packages = () => {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl mb-4 text-gh-red"
           >
-            Rental Packages
+            Services & Pricing
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -91,8 +89,8 @@ export const Packages = () => {
               transition={{ duration: 0.5, delay: i * 0.12 }}
               viewport={{ once: true }}
               className={`relative p-10 rounded-[40px] border-2 flex flex-col transition-all duration-300 group hover:scale-[1.02] ${pkg.featured
-                  ? "bg-gh-bg border-gh-red gh-shadow-red"
-                  : "bg-white border-gh-muted/20 gh-shadow-teal hover:border-gh-red/30"
+                ? "bg-gh-bg border-gh-red gh-shadow-red"
+                : "bg-white border-gh-muted/20 gh-shadow-teal hover:border-gh-red/30"
                 }`}
             >
               {pkg.featured && (

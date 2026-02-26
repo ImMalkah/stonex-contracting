@@ -1,6 +1,5 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
-import { Testimonials } from "./components/Testimonials";
 import { Process } from "./components/Process";
 import { Packages } from "./components/Packages";
 import { FAQ } from "./components/FAQ";
@@ -13,7 +12,6 @@ export default function App() {
       <Header />
       <main>
         <Hero />
-        <Testimonials />
         <Process />
         <Packages />
         <FAQ />
