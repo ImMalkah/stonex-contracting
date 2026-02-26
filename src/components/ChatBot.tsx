@@ -41,14 +41,16 @@ const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **
 - For complex quotes, encourage calling the team directly.`;
 
 // ─── Gemini client (lazy init) ──────────────────────────────────────
-let genai: GoogleGenAI | null = null;
+let genai: any = null;
 
 function getAIModel() {
     const key = process.env.GEMINI_API_KEY;
-    if (!key || key === "YOUR_GEMINI_API_KEY_HERE") return null;
-    if (!genai) genai = new GoogleGenAI(key);
+    if (!key || key === "YOUR_GEMINI_API_KEY_HERE" || key.trim() === "") return null;
 
-    return genai.getGenerativeModel({
+    // Using { apiKey } object is more robust in some browser environments
+    if (!genai) genai = new (GoogleGenAI as any)({ apiKey: key });
+
+    return (genai as any).getGenerativeModel({
         model: "gemini-1.5-flash-latest",
         systemInstruction: SYSTEM_PROMPT
     });
