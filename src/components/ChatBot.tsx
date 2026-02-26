@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface Message {
@@ -11,56 +10,60 @@ interface Message {
     timestamp: Date;
 }
 
-// ─── System prompt with full business context ───────────────────────
-const SYSTEM_PROMPT = `You are the friendly and professional AI assistant for **Stonex Contracting**, a heavy equipment and construction company based in the Greater Toronto Area (GTA).
+// ─── Local Knowledge Base Matcher ──────────────────────────────────────
+// This completely replaces the cloud AI. It is 100% free, unlimited, instant, 
+// and will *never* hallucinate incorrect pricing.
+const generateLocalResponse = (input: string): string => {
+    const text = input.toLowerCase();
 
-## About Stonex Contracting
-- We are a trusted GTA partner for machine rentals, excavation, and concrete work
-- Service areas: Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton, and surrounding GTA regions
-- Core services: Excavation, Concrete Work, Landscaping, Demolition, Equipment Rental
+    // Greetings & pleasantries
+    if (text.match(/\b(hi|hello|hey|greetings|afternoon|morning|how are you)\b/)) {
+        return "Hello! I'm the internal Stonex assistant. How can I help you with your project or equipment rental today?";
+    }
 
-## Concrete Services
-- All types of concrete poured and finished
-- Finishes: white/broom finish, exposed aggregate, stamp
-- Projects: Walkways, driveways, patios, Foundations
+    // Concrete Services
+    if (text.match(/\b(concrete|patio|driveway|walkway|foundation|stamp|aggregate|paving|pour)\b/)) {
+        return "We offer premium concrete services including driveways, patios, walkways, and foundations. We provide white/broom finishes, exposed aggregate, and stamped concrete. Would you like a free quote for your project?";
+    }
 
-## Equipment Rental Pricing
-- Wheeled skid steers: $250/day, $1,500/week
-- Track skid steers: $350/day, $1,800/week
-- Mini excavator: $250/day, $1,500/week
-- Trim dozer: $400/day, $5,000/month
+    // Mini Excavator
+    if (text.match(/\b(mini ex|excavator|mini-excavator|mini excavator|dig|digger)\b/)) {
+        return "Our **mini excavators** rent for **$250/day** or **$1,500/week**. This includes insurance and safety equipment. Do you need delivery to your site?";
+    }
 
-## Additional Info
-- Free site assessments — no obligation
-- All rentals include: insurance coverage, safety equipment, no hidden fees, GTA-wide delivery, 24/7 support line
-- Operators are fully licensed and insured
-- Most equipment: same-day or next-day delivery
-- Rush availability subject to schedule
-- 24/7 breakdown support with replacement dispatch
+    // Skid Steer
+    if (text.match(/\b(skid steer|skidsteer|bobcat|loader|wheeled|track loader)\b/)) {
+        return "We have two types of skid steers available:\n• **Wheeled Skid Steers**: $250/day or $1,500/week\n• **Track Skid Steers**: $350/day or $1,800/week\nWhich one fits your site conditions better?";
+    }
 
-## Contact
-- Phone: (289) 925-2669
-- Email: info@stonexcontracting.ca
+    // Dozer
+    if (text.match(/\b(dozer|bulldozer|trim dozer|grading)\b/)) {
+        return "Our **trim dozers** are available for **$400/day** or **$5,000/month**. They're perfect for precise grading. Would you like to check our availability?";
+    }
 
-## Your Behavior Guidelines
-- Be warm, helpful, and concise (keep responses under 150 words when possible)
-- Answer questions about services, pricing, availability, and the process
-- For specific project quotes, encourage them to fill out the contact form or call
-- If someone asks something outside your knowledge, politely redirect them to contact the team directly
-- Never make up specific pricing beyond what's listed above
-- Use a conversational, professional tone — like an experienced project manager helping a friend`;
+    // General Rentals Overview
+    if (text.match(/\b(rent|rental|rentals|machine|equipment|fleet|inventory)\b/)) {
+        return "We rent wheeled skid steers ($250/day), track skid steers ($350/day), mini excavators ($250/day), and trim dozers ($400/day). All rentals include insurance, safety equipment, and GTA-wide delivery. What machine are you looking for?";
+    }
 
-// ─── Gemini client (lazy init) ──────────────────────────────────────
-let genaiClient: GoogleGenAI | null = null;
+    // Delivery / Areas / Areas served
+    if (text.match(/\b(delivery|deliver|where|areas|hamilton|mississauga|toronto|oakville|burlington|brampton|gta|location|bring)\b/)) {
+        return "We provide GTA-wide delivery, including Hamilton, Mississauga, Toronto, Oakville, Burlington, and Brampton. Most equipment can be delivered same-day or next-day! Where is your site located?";
+    }
 
+    // Demolition & Excavation (Service)
+    if (text.match(/\b(demolition|demo|excavation|digging|trench)\b/)) {
+        return "We provide full professional excavation and demolition services. We have the heavy machinery and licensed operators to handle your project start to finish. Would you like to schedule a free site assessment?";
+    }
 
-function getClient(): GoogleGenAI | null {
-    if (genaiClient) return genaiClient;
-    const key = process.env.GEMINI_API_KEY;
-    if (!key || key === "YOUR_GEMINI_API_KEY_HERE") return null;
-    genaiClient = new GoogleGenAI({ apiKey: key });
-    return genaiClient;
-}
+    // Contact / Quote / Phone
+    if (text.match(/\b(phone|call|email|contact|quote|estimate|price|cost|how much|book|schedule)\b/)) {
+        return "For specific quotes, estimates, or bookings, the best way is to call us directly at **(289) 925-2669** or email **info@stonexcontracting.ca**. We offer free, no-obligation site assessments!";
+    }
+
+    // Default Fallback
+    return "That's a great question! Since I'm a simple automated assistant, I want to make sure you get the most accurate answer. Could you give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca**? Our team would be happy to help!";
+};
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
 const SUGGESTIONS = [
@@ -118,40 +121,10 @@ export const ChatBot = () => {
             setIsLoading(true);
 
             try {
-                const client = getClient();
+                // Simulate a slight network delay to feel like a real person typing
+                await new Promise((r) => setTimeout(r, 600 + Math.random() * 800));
 
-                if (!client) {
-                    // Fallback mode when no API key is set
-                    await new Promise((r) => setTimeout(r, 800));
-                    setMessages((prev) => [
-                        ...prev,
-                        {
-                            id: (Date.now() + 1).toString(),
-                            role: "assistant",
-                            content:
-                                "Thanks for reaching out! Our team is the best resource for your question. Give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca** and we'll get right back to you!",
-                            timestamp: new Date(),
-                        },
-                    ]);
-                    return;
-                }
-
-                // Build conversation history for context
-                const conversationHistory = messages
-                    .filter((m) => m.id !== "welcome")
-                    .map((m) => `${m.role === "user" ? "Customer" : "Assistant"}: ${m.content}`)
-                    .join("\n");
-
-                const fullPrompt = `${SYSTEM_PROMPT}\n\n## Conversation so far:\n${conversationHistory}\nCustomer: ${trimmed}\nAssistant:`;
-
-                const response = await client.models.generateContent({
-                    model: "gemini-2.0-flash",
-                    contents: fullPrompt,
-                });
-
-                const reply =
-                    response.text?.trim() ||
-                    "Sorry, I didn't quite catch that. Could you try rephrasing?";
+                const reply = generateLocalResponse(trimmed);
 
                 setMessages((prev) => [
                     ...prev,
