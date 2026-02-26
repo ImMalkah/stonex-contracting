@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
-import OpenAI from "openai";
+import Groq from "groq-sdk";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface Message {
@@ -12,64 +12,54 @@ interface Message {
 }
 
 // ─── Knowledge Base ──────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are the professional and helpful AI assistant for **Stonex Contracting**.
-Your goal is to answer questions about the company's services, pricing, and service areas based on the following information:
+const SYSTEM_PROMPT = `You are the professional AI assistant for **Stonex Contracting**.
+Only answer based on our business profile:
 
 ## About Stonex Contracting
-- **Specialization**: Heavy equipment rentals, excavation, and professional concrete work.
-- **Service Areas**: Greater Toronto Area (GTA), including Hamilton, Mississauga, Toronto, Oakville, Burlington, and Brampton.
+- **Specialization**: Heavy equipment rentals (excavators, loaders, dozers), excavation, and concrete work.
+- **Service Areas**: GTA (Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton).
 
 ## Services & Pricing
-### 1. Concrete Work
-- We handle all types of concrete: driveways, patios, walkways, and foundations.
-- **Finishes**: White/broom finish, exposed aggregate, and stamped concrete.
-- We offer free, no-obligation site assessments.
-
-### 2. Equipment Rentals (Daily/Weekly/Monthly)
 - **Wheeled Skid Steer**: $250/day | $1,500/week
 - **Track Skid Steer**: $350/day | $1,800/week
 - **Mini Excavator**: $250/day | $1,500/week
 - **Trim Dozer**: $400/day | $5,000/month
-- *All rentals include insurance, safety equipment, and GTA-wide delivery.*
+*Insurance, delivery, and safety gear are included.*
 
-### 3. Professional Services
-- **Excavation & Demolition**: Full-service demo and digging with professional operators.
-- **Delivery**: Same-day or next-day delivery available for most equipment.
-- **Support**: 24/7 breakdown support with replacement dispatch.
+## Concrete
+- Finishes: White/broom, exposed aggregate, stamped concrete.
+- We do driveways, patios, walkways, and foundations.
 
-## Contact Information
-- **Phone**: (289) 925-2669
-- **Email**: info@stonexcontracting.ca
-- **Website**: stonexcontracting.ca
+## Contact
+- Phone: (289) 925-2669
+- Email: info@stonexcontracting.ca
 
-## Behavior Rules
-1. **Be Helpful & Concise**: Provide clear, direct answers.
-2. **Stay on Topic**: ONLY answer questions about Stonex Contracting. If asked about unrelated topics, politely redirect back to our services.
-3. **Accuracy**: Never invent pricing. Only use the figures listed above.
-4. **Call to Action**: For complex project quotes or bookings, always encourage the user to call (289) 925-2669 or email the team.
-5. **Tone**: Warm, reliable, and professional.`;
+## Behavior
+- Answer only about Stonex Contracting.
+- Keep answers under 2 sentences when possible.
+- Be helpful but brisk.
+- For bookings, direct them to call (289) 925-2669.`;
 
-// ─── OpenAI client (lazy init) ──────────────────────────────────────
-let openaiClient: OpenAI | null = null;
+// ─── Groq client (lazy init) ──────────────────────────────────────
+let groqClient: Groq | null = null;
 
-function getOpenAIClient() {
-    const key = process.env.OPENAI_API_KEY;
+function getGroqClient() {
+    const key = process.env.GROQ_API_KEY;
     if (!key || key.trim() === "") return null;
-    if (!openaiClient) {
-        openaiClient = new OpenAI({
+    if (!groqClient) {
+        groqClient = new Groq({
             apiKey: key,
-            dangerouslyAllowBrowser: true // This is safe here because we're using environment variables
+            dangerouslyAllowBrowser: true
         });
     }
-    return openaiClient;
+    return groqClient;
 }
 
 // ─── Quick suggestion chips ─────────────────────────────────────────
 const SUGGESTIONS = [
     "Concrete finishing options?",
-    "Mini excavator rental price?",
+    "Mini excavator price?",
     "Do you serve Hamilton?",
-    "Concrete patio quotes?",
 ];
 
 export const ChatBot = () => {
@@ -78,7 +68,7 @@ export const ChatBot = () => {
         {
             id: "welcome",
             role: "assistant",
-            content: "Welcome to Stonex! 👋 I'm here to help with your project planning, equipment rentals, or excavation questions. How can I assist you today?",
+            content: "How can Stonex help your project today?",
             timestamp: new Date(),
         },
     ]);
@@ -116,7 +106,7 @@ export const ChatBot = () => {
             setIsLoading(true);
 
             try {
-                const client = getOpenAIClient();
+                const client = getGroqClient();
 
                 if (!client) {
                     await new Promise((r) => setTimeout(r, 800));
@@ -125,7 +115,7 @@ export const ChatBot = () => {
                         {
                             id: (Date.now() + 1).toString(),
                             role: "assistant",
-                            content: "I'm currently in manual mode. Please give us a call at **(289) 925-2669** or email **info@stonexcontracting.ca** for immediate help!",
+                            content: "I'm in manual mode. Call us at **(289) 925-2669**!",
                             timestamp: new Date(),
                         },
                     ]);
@@ -140,16 +130,21 @@ export const ChatBot = () => {
                     }));
 
                 const completion = await client.chat.completions.create({
-                    model: "gpt-4o-mini",
+                    model: "deepseek-r1-distill-llama-70b",
                     messages: [
                         { role: "system", content: SYSTEM_PROMPT },
                         ...chatMessages,
                         { role: "user", content: trimmed }
                     ],
-                    max_tokens: 300,
+                    temperature: 0.6,
+                    max_completion_tokens: 300,
                 });
 
-                const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that. Please try calling us!";
+                let reply = completion.choices[0]?.message?.content || "Please contact us directly for that!";
+
+                // DeepSeek-R1 Distill models often include <think> tags. 
+                // We strip them for the end-user interface.
+                reply = reply.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
                 setMessages((prev) => [
                     ...prev,
@@ -162,16 +157,12 @@ export const ChatBot = () => {
                 ]);
             } catch (err: any) {
                 console.error("Chat error:", err);
-                const isInsufficientQuota = err?.message?.toLowerCase().includes("quota") || err?.status === 429;
-
                 setMessages((prev) => [
                     ...prev,
                     {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
-                        content: isInsufficientQuota
-                            ? "Our automated system is at maximum capacity. Please reach us at **(289) 925-2669** for immediate help!"
-                            : "I'm having a little trouble right now. You can reach us directly at **(289) 925-2669**!",
+                        content: "Service interrupted. Reach us at **(289) 925-2669**.",
                         timestamp: new Date(),
                     },
                 ]);
@@ -271,7 +262,7 @@ export const ChatBot = () => {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Message Stonex assistant…"
+                                placeholder="Message Stonex..."
                                 disabled={isLoading}
                                 className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gh-red/50 disabled:opacity-50"
                             />

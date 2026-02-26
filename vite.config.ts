@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      'process.env.OPENAI_API_KEY': JSON.stringify((process.env.OPENAI_API_KEY || env.OPENAI_API_KEY || '').trim()),
+      'process.env.GROQ_API_KEY': JSON.stringify((process.env.GROQ_API_KEY || env.GROQ_API_KEY || '').trim()),
     },
     resolve: {
       alias: {
