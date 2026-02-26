@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import Groq from "groq-sdk";
+import { supabase } from "../lib/supabase";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface Message {
@@ -11,29 +12,19 @@ interface Message {
     timestamp: Date;
 }
 
-// ─── Knowledge Base ──────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are the professional AI assistant for **Stonex Contracting**.
-Only answer based on our business profile:
+interface KnowledgeItem {
+    category: string;
+    content: string;
+}
 
-## About Stonex Contracting
-- **Specialization**: Heavy equipment rentals (excavators, loaders, dozers), excavation, and concrete work.
-- **Service Areas**: GTA (Hamilton, Mississauga, Toronto, Oakville, Burlington, Brampton).
+// ─── Knowledge Base Base Prompt ────────────────────────────────────────
+const BASE_SYSTEM_PROMPT = `You are the professional AI assistant for **Stonex Contracting**.
+Only answer based on our business profile. If a user asks something unrelated, steer them back to our machinery or contracting work.
 
-## Services & Pricing
-- **Wheeled Skid Steer**: $250/day | $1,500/week
-- **Track Skid Steer**: $350/day | $1,800/week
-- **Mini Excavator**: $250/day | $1,500/week
-- **Trim Dozer**: $400/day | $5,000/month
-*Insurance, delivery, and safety gear are included.*
+## Business Knowledge:
+`;
 
-## Concrete
-- Finishes: White/broom, exposed aggregate, stamped concrete.
-- We do driveways, patios, walkways, and foundations.
-
-## Contact
-- Phone: (289) 925-2669
-- Email: info@stonexcontracting.ca
-
+const BEHAVIOR_PROMPT = `
 ## Behavior
 - Answer only about Stonex Contracting.
 - Keep answers under 2 sentences when possible.
@@ -75,8 +66,33 @@ export const ChatBot = () => {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showPulse, setShowPulse] = useState(true);
+    const [dynamicPrompt, setDynamicPrompt] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Fetch dynamic knowledge base from Supabase
+    useEffect(() => {
+        const fetchKnowledge = async () => {
+            const { data, error } = await supabase
+                .from('chatbot_knowledge')
+                .select('category, content');
+
+            if (error || !data) {
+                console.error("Error fetching knowledge base:", error);
+                // Fallback to basic info if DB fails
+                setDynamicPrompt("- Stonex offers concrete, excavation, and machine rentals.\n- Phone: (289) 925-2669");
+                return;
+            }
+
+            const knowledgeString = data
+                .map((item: KnowledgeItem) => `- **${item.category}**: ${item.content}`)
+                .join("\n");
+
+            setDynamicPrompt(knowledgeString);
+        };
+
+        fetchKnowledge();
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,10 +145,12 @@ export const ChatBot = () => {
                         content: m.content
                     }));
 
+                const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}${dynamicPrompt}${BEHAVIOR_PROMPT}`;
+
                 const completion = await client.chat.completions.create({
                     model: "openai/gpt-oss-20b",
                     messages: [
-                        { role: "system", content: SYSTEM_PROMPT },
+                        { role: "system", content: fullSystemPrompt },
                         ...chatMessages,
                         { role: "user", content: trimmed }
                     ],
@@ -141,9 +159,6 @@ export const ChatBot = () => {
                 });
 
                 let reply = completion.choices[0]?.message?.content || "Please contact us directly for that!";
-
-                // DeepSeek-R1 Distill models often include <think> tags. 
-                // We strip them for the end-user interface.
                 reply = reply.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
                 setMessages((prev) => [
@@ -170,7 +185,7 @@ export const ChatBot = () => {
                 setIsLoading(false);
             }
         },
-        [isLoading, messages]
+        [isLoading, messages, dynamicPrompt]
     );
 
     const handleSubmit = (e: React.FormEvent) => {
