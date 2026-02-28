@@ -1,30 +1,43 @@
+/// <reference types="vite/client" />
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Maximize2, X } from "lucide-react";
 
 import { Button } from "./Button";
 
-// Utilizing the real photos uploaded by the client
-const galleryImages = [
-    { url: "/gallery/IMG_1913.jpg", title: "Site Assessment", category: "Our Work" },
-    { url: "/gallery/IMG_2144.jpg", title: "Excavation", category: "Our Work" },
-    { url: "/gallery/IMG_2147.jpg", title: "Equipment Delivery", category: "Our Work" },
-    { url: "/gallery/IMG_2240.jpg", title: "Concrete Finishing", category: "Our Work" },
-    { url: "/gallery/IMG_2325.jpg", title: "Driveway Concrete", category: "Our Work" },
-    { url: "/gallery/IMG_2399.jpg", title: "Machine Operator", category: "Our Work" },
-    { url: "/gallery/IMG_2412.jpg", title: "Patios & Walkways", category: "Our Work" },
-    { url: "/gallery/IMG_2413.jpg", title: "Concrete Pouring", category: "Our Work" },
-    { url: "/gallery/IMG_2782.jpg", title: "Residential Service", category: "Our Work" },
-    { url: "/gallery/IMG_3430.jpg", title: "Exposed Aggregate", category: "Our Work" },
-    { url: "/gallery/IMG_3625.jpg", title: "Site Grading", category: "Our Work" },
-    { url: "/gallery/IMG_3626.jpg", title: "Heavy Machinery", category: "Our Work" },
-    { url: "/gallery/IMG_3744.jpg", title: "Landscaping Details", category: "Our Work" },
-    { url: "/gallery/IMG_3746.jpg", title: "Track Loader", category: "Our Work" },
-    { url: "/gallery/IMG_3760.jpg", title: "Foundation Prep", category: "Our Work" },
-    { url: "/gallery/IMG_3762.jpg", title: "Skid Steer Action", category: "Our Work" },
-    { url: "/gallery/IMG_3766.jpg", title: "Mini Excavator", category: "Our Work" },
-    { url: "/gallery/IMG_3770.jpg", title: "Demolition Tasks", category: "Our Work" },
-];
+const imageTitles: Record<string, string> = {
+    "/gallery/IMG_1913.jpg": "Site Assessment",
+    "/gallery/IMG_2144.jpg": "Excavation",
+    "/gallery/IMG_2147.jpg": "Equipment Delivery",
+    "/gallery/IMG_2240.jpg": "Concrete Finishing",
+    "/gallery/IMG_2325.jpg": "Driveway Concrete",
+    "/gallery/IMG_2399.jpg": "Machine Operator",
+    "/gallery/IMG_2412.jpg": "Patios & Walkways",
+    "/gallery/IMG_2413.jpg": "Concrete Pouring",
+    "/gallery/IMG_2782.jpg": "Residential Service",
+    "/gallery/IMG_3430.jpg": "Exposed Aggregate",
+    "/gallery/IMG_3625.jpg": "Site Grading",
+    "/gallery/IMG_3626.jpg": "Heavy Machinery",
+    "/gallery/IMG_3744.jpg": "Landscaping Details",
+    "/gallery/IMG_3746.jpg": "Track Loader",
+    "/gallery/IMG_3760.jpg": "Foundation Prep",
+    "/gallery/IMG_3762.jpg": "Skid Steer Action",
+    "/gallery/IMG_3766.jpg": "Mini Excavator",
+    "/gallery/IMG_3770.jpg": "Demolition Tasks",
+};
+
+// Dynamically load all images from the public/gallery folder
+const imageModules = import.meta.glob('/public/gallery/*.{jpg,jpeg,png,webp,avif}', { eager: true });
+
+const galleryImages = Object.keys(imageModules).map((filePath) => {
+    // Remove '/public' to get the URL path for the browser
+    const url = filePath.replace('/public', '');
+    return {
+        url,
+        title: imageTitles[url] || "Recent Project",
+        category: "Our Work"
+    };
+});
 
 export const Gallery = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
