@@ -1,11 +1,10 @@
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
-import { Process } from "./components/Process";
 import { Gallery } from "./components/Gallery";
 import { Packages } from "./components/Packages";
-import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
 import { ChatBot } from "./components/ChatBot";
+import { Testimonials } from "./components/Testimonials";
 
 export default function App() {
   return (
@@ -15,8 +14,7 @@ export default function App() {
         <Hero />
         <Gallery />
         <Packages />
-        <Process />
-        <FAQ />
+        <Testimonials />
       </main>
       <Footer />
       <ChatBot />
